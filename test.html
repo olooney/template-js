@@ -1,0 +1,152 @@
+<!DOCTYPE HTML5>
+<html>
+	<head>
+		<title>template-js</title>
+		<script src="template.js" type="text/javascript"></script>
+	</head>
+	<body>
+	<script>
+		String.prototype.escapeHTML = function () {                                        
+			return(                                                                 
+				this.replace(/&/g,'&amp;').                                         
+					replace(/>/g,'&gt;').                                           
+					replace(/</g,'&lt;').                                           
+					replace(/"/g,'&quot;')                                         
+			);                                                                      
+		};
+
+		function test(src) {
+			function w(x) { document.write(x); }
+			function wb(block, color) { 
+				if ( color ) {
+					w('<pre style="background-color: ' + color + '"><code>'); 
+				} else {
+					w('<pre><code>'); 
+				}
+				w(String(block).escapeHTML()); 
+				w('</code></pre>'); 
+			}
+			w('<div style="border:5px solid #999; padding: 5px; margin: 5px;">');
+			wb(src, '#CCF')
+			var template = compile(src);
+			wb( String(template).replace(/;|\{|\}/g, '$&\n').replace(/[\n\r]+/g, '\n').replace(/\{\n\}/g, '{}'), '#CFC');
+			for ( var i=1;i<arguments.length;i++ ) {
+				var context = arguments[i];
+				wb( JSON.stringify(context) + ' =>\n' + template(context), '#DDD' );
+			}
+			w('</div>');
+		}
+		test('Hello, {{name}} world!', { name: 'template' });
+		test('the sum of {{x}} and {{y}} is {{x+y}}', { x:3, y: 5});
+		test([
+			'Hi {{name}}!',
+			'{% if gender === "male" %}',
+				'You know, once a man hits {{age+1}}, he\'s going to start slowing down.',
+			'{% else %}',
+				'You know, after a woman hits {{age-5}}, she\'s going to start slowing down.',
+			'{% end %}',
+			'Ask your doctor about crack cocaine today!'
+		].join('\n'), 
+			{ name: 'Bill', age: 29, gender: 'male' }, 
+			{ name: 'Susan', age: 28, gender: 'female'}
+		);
+
+		test([
+			'I like to give my pets unusual names: ',
+			'{% for each pet, rank in my.pets %}',
+				'my {{pet.species}} is named {{pet.name}}',
+				'{% if rank < my.pets.length - 1 %}',
+					', ',
+				'{% else %}',
+					'. ',
+				'{% end %}',
+			'{% end %}'
+		].join(''), { my: { pets: [ 
+			{ name: 'Fluffy', species: 'fish' }, 
+			{ name: 'Bingo',  species: 'bird' },
+			{ name: 'Nemo',   species: 'dog'  },
+			{ name: 'Yeller', species: 'cat'  }
+		] } });
+
+		test([
+			'			',
+			'{% block title %}Search{% endblock title %}',
+			'{% block main %}',
+			'	',
+			'	{% block search_form %}',
+			'		<form method="get" action="/search/">',
+			'			<h1>Search</h1>',
+			'			<div>	',
+			'				{{search_form.keyword.html}}',
+			'				<input type="submit" class="search-submit-button" value="Search">',
+			'				<br>',
+			'				{% if left_blank %}',
+			'					<small class="error">[Enter at least one keyword.]</small> <br>',
+			'				{% endif %}',
+			'				<small>You may use AND and OR to form complex queries.</small>',
+			'			</div>',
+			'		{% if !keyword %}',
+			'		<script type="text/javascript" type="text/javascript">',
+			'			document.getElementById("id_keyword").focus();',
+			'		</' + 'script>',
+			'		{% endif %}',
+			'		',
+			'		<div class="search-tag-filters">',
+			'			{% for each field, index in search_form.include_fields %}',
+			'				<div class="search-tag-filter">',
+			'					<small>',
+			'						{{field.html}}{{field.label}}',
+			'					</small>',
+			'				</div>',
+			'			{% endfor %}',
+			'			<br style="clear:both;">',
+			'		</div>',
+			'		',
+			'		</form>',
+			'	{% endblock search_form %}',
+			'	',
+			'	{% block results %}',
+			'		{% if keyword %}',
+			'			<div>',
+			'				<h1>{{results.count}} Results For "{{keyword}}" </h1>',
+			'				<ul class="index">',
+			'					{% for each article, rank in results %}',
+			'						<li>',
+			'							<h4>{{article.title}}</h4>',
+			'							<p>{{article.teaser}}</p>',
+			'						</li>',
+			'					{% endfor %}',
+			'				</ul>',
+			'			</div>',
+			'		{% endif %}',
+			'	{% endblock results %}',
+			'',
+			'    <p>',
+			'      Not finding anything?  You could try the <a href="/archive/">archives</a> or look for a <a href="/tags/">tag</a>.',
+			'    </p>',
+			'	',
+			'{% endblock main %}'
+		].join('\n').replace(/\t/g, ' '), {
+			keyword: 'hello',
+			left_blank: false,
+			results: [{
+				title: 'Testing Methodologies',
+				teaser: 'Hello, my name is Oran and I\'m here today to talk about...'
+			}, {
+				title: 'Hello, nodeJS World!',
+				teaser: 'node.js is an up-and-coming SSJS framework based on the V8...'
+			}],
+			search_form: {
+				keyword: { html: '<input name="keyword">', label: 'Keyword' },
+				include_fields: [
+					{ html: '<input type="checkbox" name="C++">', label: 'C++' },
+					{ html: '<input type="checkbox" name="Java">', label: 'Java' },
+					{ html: '<input type="checkbox" name="Python">', label: 'Python' }
+				]
+			}
+		});
+		
+		</script>
+
+	</body>
+</html>
