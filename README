@@ -1,0 +1,37 @@
+This is template engine for JavaScript. It parses a Django-like syntax,
+generates equivalent JavaScript code, and compiles a template function on
+the fly. It's still at the "crazy idea coded up in a blur of hacking"
+stage of development.
+
+I'm also able to compile each "block" down to a separate
+method on a template object, which is the key to implementing template
+inheritance.
+
+Unlike Django, which makes up a weak DSL to prevent too much
+logic from leaking into the template, I just use JavaScript expressions
+and statements. Frankly, JavaScript is a better language even for 
+presentational logic. It also seems to me that most front-end developers
+will know JavaScript already. Plus, one of the huge wins of server-side
+JavaScript is being able to learn just one language really well: there's no
+reason to throw that away by making up a half-assed little language just for
+templates. It would be nice to have a library of formatting functions like
+Django's filters, but that's easy enough to implement independent of the 
+template engine.
+
+The central idea seems promising, but I'm not sure this implementation (or 
+even this syntax) is the the right one. I'm familiar with Django templates
+and have a large body of examples I can pull over so it's convenient for me
+right now.
+
+The long example at the end of test.html was copied from a real Django
+template, the search page of my blog. It only took a few edits ("not" -> "!",
+etc.) to get the whole thing ported over, and it worked immediately. If
+I just add template inheritance (half-way there already) and includes (trivial)
+then I should be able to port my whole site in a few hours.
+
+I'm particularly concerned about the use of "with" blocks but am not sure
+how I can offer equivalently concise syntax without parsing JavaScript
+expression fully. I'm less concerned with the use of new Function;" templates
+could always be precompiled if necessary.
+
+
