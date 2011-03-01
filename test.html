@@ -29,7 +29,7 @@
 			w('<div style="border:5px solid #999; padding: 5px; margin: 5px;">');
 			wb(src, '#CCF')
 			var template = compile(src);
-			wb( String(template).replace(/;|\{|\}/g, '$&\n').replace(/[\n\r]+/g, '\n').replace(/\{\n\}/g, '{}'), '#CFC');
+			wb( template.toCodeString().replace(/;|\{|\}/g, '$&\n').replace(/[\n\r]+/g, '\n').replace(/\{\n\}/g, '{}'), '#CFC');
 			for ( var i=1;i<arguments.length;i++ ) {
 				var context = arguments[i];
 				wb( JSON.stringify(context) + ' =>\n' + template(context), '#DDD' );
