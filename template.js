@@ -64,13 +64,19 @@ Frame.prototype = {
 	}
 };
 
-function compile(src) {
+function compile(src, parentTemplate) {
 	var pattern = /(\{%(.*?)%\})/gm;
 	var match = pattern.exec(src);
 	var lastEnd = 0;
 	
 	var stack = [ new Frame('root') ];
 	var blocks = {};
+
+	if ( parentTemplate ) {
+		for ( var name in parentTemplate.blocks ) {
+			blocks[name] = parentTemplate.blocks[name];
+		}
+	}
 
 	function top() { return stack[stack.length-1]; }
 
@@ -115,7 +121,9 @@ function compile(src) {
 	if ( stack.length !== 1 ) {
 		throw new Error("unclosed blocks!");
 	}
-	blocks.root = stack[0].compile();
+	if ( !blocks.root ) {
+		blocks.root = stack[0].compile();
+	}
 
 	function template(context) {
 		return arguments.callee.blocks.root(context);

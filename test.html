@@ -15,27 +15,33 @@
 			);                                                                      
 		};
 
-		function test(src) {
-			function w(x) { document.write(x); }
-			function wb(block, color) { 
-				if ( color ) {
-					w('<pre style="background-color: ' + color + '"><code>'); 
-				} else {
-					w('<pre><code>'); 
-				}
-				w(String(block).escapeHTML()); 
-				w('</code></pre>'); 
+		function w(x) { document.write(x); }
+		function wb(block, color) { 
+			if ( color ) {
+				w('<pre style="background-color: ' + color + '"><code>'); 
+			} else {
+				w('<pre><code>'); 
 			}
+			w(String(block).escapeHTML()); 
+			w('</code></pre>'); 
+		}
+		function wt(template) {
+			wb( template.toCodeString().replace(/;|\{|\}/g, '$&\n').replace(/[\n\r]+/g, '\n').replace(/\{\n\}/g, '{}'), '#CFC');
+		}
+		function render(template, context) {
+			wb( JSON.stringify(context) + ' =>\n' + template(context), '#DDD' );
+		}
+		function test(src, pt) {
 			w('<div style="border:5px solid #999; padding: 5px; margin: 5px;">');
 			wb(src, '#CCF')
-			var template = compile(src);
-			wb( template.toCodeString().replace(/;|\{|\}/g, '$&\n').replace(/[\n\r]+/g, '\n').replace(/\{\n\}/g, '{}'), '#CFC');
+			var template = compile(src, pt);
+			wt(template);
 			for ( var i=1;i<arguments.length;i++ ) {
-				var context = arguments[i];
-				wb( JSON.stringify(context) + ' =>\n' + template(context), '#DDD' );
+				render(template, arguments[i]);
 			}
 			w('</div>');
 		}
+
 		test('Hello, {{name}} world!', { name: 'template' });
 		test('the sum of {{x}} and {{y}} is {{x+y}}', { x:3, y: 5});
 		test([
@@ -68,7 +74,109 @@
 			{ name: 'Yeller', species: 'cat'  }
 		] } });
 
-		test([
+		w('<h6>Simple Base Template For a Message</h6>');
+		var messageBase = compile([
+			'<div>',
+				'<h6> {% block title %} TITLE {% endblock title %} </h6>',
+				'<div> {% block lead %} LEAD {% endblock lead %} </div>',
+				'<p> {% block content %} CONTENT {% endblock content %} </p>',
+			'</div>'
+		].join('\n'));
+		wt(messageBase);
+
+		w('<h6>Specialized Simple Message</h6>');
+		var message = compile([
+			'{% block title %} Message - {{title}} {% endblock title %}',
+			'{% block content %} {{content}} ... {% endblock content %}'
+		].join('\n'), messageBase);
+		wt(message);
+		render(message, {
+			title: 'Hello',
+			content: 'So, how\'s it going today?'
+		});
+
+
+		var base = compile([
+			'<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">',
+			'<html lang="en-us" dir="ltr">',
+			'<head>',
+			'<!-- meta -->',
+			'<meta http-equiv="content-type" content="text/html; charset=utf-8">',
+			'<meta name="author" content="Oran Looney">',
+			'<meta name="robots" content="INDEX,FOLLOW">',
+			'<meta name="description" content="Oran quitely programming away and sharing a few of the lessons learned">',
+			'<meta name="keywords" content="Programming,Code,Coding,Software,Software Development,Web,Web Development,Python,JavaScript,C++">',
+			'',
+			'<title>OranLooney - {% block title %}{% endblock title %}</title>',
+			'',
+			'<!-- style -->',
+			'<link rel="stylesheet" type="text/css" href="/static/site/css/yui-reset-min.css">',
+			'<link rel="stylesheet" type="text/css" href="/static/site/css/main.css">',
+			'<link rel="stylesheet" type="text/css" media="print" href="/static/site/css/print.css">',
+			'<!--[if lt IE 7.]>',
+			'	<link rel="stylesheet" type="text/css" href="/static/site/css/icons_gif.css">',
+			'<![endif]-->',
+			'{% block extrastyle %}{% endblock extrastyle %}',
+			'{% block extrahead %}{% endblock extrahead %}',
+			'</head>',
+			'',
+			'<body>',
+			'{% block body %}',
+			'  <div id="banner">',
+			'	<a href="/">OranLooney.com</a>',
+			'	<h6>quietly programming away</h6>',
+			'  </div>',
+			'  <div class="box" id="sidebar">',
+			'	{% block quick_search %}',
+			'		<form id="quick-search" method="get" action="/search/">',
+			'			<div>',
+			'				<input type="hidden" name="alltags">',
+			'				<input type="text" name="keyword" class="keyword-field">',
+			'				<button type="submit" class="search-submit-button">Search</button>',
+			'		  	</div>',
+			'		  </form>',
+			'	{% endblock quick_search %}',
+			'',
+			'    <ul class="menu">',
+			'      {% block home_sidebar %}',
+			'        <li class="menu_home"><a href="/">Home</a></li>',
+			'      {% endblock home_sidebar %}',
+			'',
+			'      {% block basic_sidebar %}',
+			'		<li class="menu_rss_feed"><a href="/feeds/blog/" title="subscribe to the RSS feed">RSS Feed</a></li>',
+			'        <li class="menu_tags"><a href="/tags/" title="search articles by tag">Tags</a></li>',
+			'        <li class="menu_index"><a href="/archive" title="search articles chronologically">Archive</a></li>',
+			'        <li class="menu_break"></li>',
+			'        <li class="menu_bookshelf" title="my books on librarything.com"><a href="http://www.librarything.com/catalog.php?view=olooney&amp;offset=0&amp;shelf_rows=10&amp;previousOffset=0&amp;shelf=shelf">Bookshelf</a></li>',
+			'        <li class="menu_sig" title="my endorsement of Agile"><a href="http://agilemanifesto.org/sign/display.cgi?ms=000000203">Manifesto</a></li>',
+			'',
+			'        <li class="menu_about_site" title="about the site itself"><a href="/colophon/">Colophon</a></li>',
+			'        <li class="menu_about_me"><a href="/author/" title="about the author">Author</a></li> ',
+			'      {% endblock basic_sidebar %}',
+			'      {% block sidebar %}',
+			'      {% endblock sidebar %}',
+			'    </ul>',
+			'  </div>',
+			'  <div id="main-wrapper">',
+			'	{% block main_wrapper %}',
+			'      {% block before_main %}{% endblock before_main %}',
+			'      <div class="content-page">',
+			'        {% block main %}',
+			'        Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Phasellus convallis. ',
+			'        {% endblock main %}',
+			'      </div>',
+			'      {% block after_main %}{% endblock after_main %}',
+			'	{% endblock main_wrapper %}',
+			'  </div>',
+			'',
+			'{% endblock body %}',
+			'</body>',
+			'</html>'
+		].join('\n'));
+		w('<h6>Base Template</h6>');
+		wt(base);
+
+		var search = compile([
 			'			',
 			'{% block title %}Search{% endblock title %}',
 			'{% block main %}',
@@ -126,7 +234,14 @@
 			'    </p>',
 			'	',
 			'{% endblock main %}'
-		].join('\n').replace(/\t/g, ' '), {
+		].join('\n').replace(/\t/g, ' '),
+		base);
+		w('<h6>Search Template inherits from Base</h6>');
+		wt(search);
+		
+		w('<h6>Rendered Search Page</h6>');
+		w('<p>Uses the generic HTML from the base template with specializations for the Search Page.</p>');
+		render(search, {
 			keyword: 'hello',
 			left_blank: false,
 			results: [{
